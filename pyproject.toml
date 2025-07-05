@@ -7,6 +7,7 @@ authors = [{ name = "Noah Gardner", email = "ngngardner@gmail.com" }]
 requires-python = "~=3.12.0"
 dependencies = [
     "accelerate>=1.8.1",
+    "fastapi[standard]>=0.115.14",
     "huggingface-hub>=0.33.1",
     "kaggle>=1.7.4.5",
     "matplotlib>=3.10.3",
@@ -19,6 +20,7 @@ dependencies = [
     "transformers>=4.53.1",
     "tritonclient>=2.59.0",
     "ultralytics>=8.3.161",
+    "uvicorn>=0.35.0",
     "yolov5>=7.0.13",
 ]
 

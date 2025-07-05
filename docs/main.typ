@@ -115,9 +115,9 @@ Describe the specific behaviors and functions of the system. Use a numbered list
 The system should handle clear images of:
 - *Case 1:* a single license plate.
 - *Case 2:* multiple license plates.
-- *Case 3:* no license plates.
 
 The system may not be able to handle images with:
+- *Case 3:* no license plates.
 - *Case 4:* low resolution or poor lighting conditions.
 - *Case 5:* obscured or damaged license plates.
 - *Case 6:* licenses not attached to vehicles, such as those on a wall or in a parking lot.
@@ -149,8 +149,25 @@ This section provides a bird's-eye view of the system's architecture.
 
 == Limitations and Potential Improvements
 
+I did not finish implementation for the case where no license plate is visible.
+Confidence scores and thresholds would help here, but the parameters were tuned
+for performance on the stitched image test case.
+
 Benchmarks are required to determine the performance of the system under load
-and also to determine production accuracy.
+and also to determine production accuracy. Tracing and other metrics would be
+useful.
+
+I was unable to deploy the OCR model to the Triton server. If I was building
+this application for production I would take the time to find a model that I can
+deploy more easily, but this is good for a proof of concept.
+
+The detection model is fast (less than 50ms per image) but the OCR model is
+slow (around 1 second per detected license plate).
+
+Multi-plate detection does not use a very good algorithm (seeing if the corners
+of boxes are within a certain range of other boxes), needs more research. Also
+the parameters are not tuned for dataset performance, rather it was tuned to
+pass the test case for the stitched image.
 
 #pagebreak()
 === Successes

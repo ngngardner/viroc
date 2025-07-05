@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import numpy as np
 import torch
@@ -74,7 +76,7 @@ class YOLOModel(TritonModel):
     def __init__(
         self,
         model_name: str = "yolo",
-        server_url: str = "localhost:8991",
+        server_url: str | None = None,
         input_size: tuple[int, int] = (640, 640),
     ) -> None:
         """
@@ -82,9 +84,11 @@ class YOLOModel(TritonModel):
 
         Args:
             model_name (str): Name of the YOLO model.
-            server_url (str): URL of the Triton server.
+            server_url (str | None): URL of the Triton server. If None, uses environment variable TRITON_SERVER_URL or defaults to localhost:8991.
             input_size (tuple[int, int]): Input size for the model.
         """
+        if server_url is None:
+            server_url = os.environ.get("TRITON_SERVER_URL", "localhost:8991")
         super().__init__(model_name, server_url)
         self.input_size = input_size
 

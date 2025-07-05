@@ -144,6 +144,56 @@ class YOLOModel(TritonModel):
         y2 = int((y_center + height / 2) * scale_y)
         return (x1, y1, x2, y2)
 
+    def get_bounding_boxes(
+        self,
+        img: Image.Image,
+        threshold: float,
+        overlap_tolerance: float = 0.05,
+    ) -> list[tuple[int, int, int, int]]:
+        """
+        Get the top bounding boxes from the model predictions filtered by a confidence threshold.
+
+        Args:
+            img (Image.Image): Input image.
+            threshold (float): Confidence threshold.
+            overlap_tolerance (float): Tolerance for overlapping boxes.
+
+        Returns:
+            list[tuple[int, int, int, int]]: List of bounding boxes.
+        """
+        predictions = self.predict(img)[0]
+        sorted_boxes = predictions[predictions[:, 4].argsort()[::-1]]
+        sorted_boxes = sorted_boxes[sorted_boxes[:, 4] > threshold]
+        original_width, original_height = img.size
+        model_width, model_height = self.input_size
+        scale_x = original_width / model_width
+        scale_y = original_height / model_height
+
+        boxes = []
+        for box in sorted_boxes:
+            x_center, y_center, width, height = box[:4]
+            x1 = int((x_center - width / 2) * scale_x)
+            y1 = int((y_center - height / 2) * scale_y)
+            x2 = int((x_center + width / 2) * scale_x)
+            y2 = int((y_center + height / 2) * scale_y)
+            boxes.append((x1, y1, x2, y2))
+
+        # filter duplicate boxes (they may have some overlap)
+        filtered_boxes = []
+        for box in boxes:
+            x1, y1, x2, y2 = box
+            if not any(
+                (
+                    abs(x1 - f_x1) < overlap_tolerance * original_width
+                    and abs(y1 - f_y1) < overlap_tolerance * original_height
+                    and abs(x2 - f_x2) < overlap_tolerance * original_width
+                    and abs(y2 - f_y2) < overlap_tolerance * original_height
+                )
+                for f_x1, f_y1, f_x2, f_y2 in filtered_boxes
+            ):
+                filtered_boxes.append(box)
+        return filtered_boxes
+
 
 class GOTOCRModel:
     """"""

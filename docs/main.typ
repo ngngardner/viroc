@@ -152,4 +152,14 @@ This section provides a bird's-eye view of the system's architecture.
 Benchmarks are required to determine the performance of the system under load
 and also to determine production accuracy.
 
+#pagebreak()
+=== Successes
+
+#image("success1.png", width: 80%)
+
+#pagebreak()
+=== Failures
+
+#image("fail_blur.png", width: 80%)
+
 #cmarker.render(read("ai_disclosure.md"))

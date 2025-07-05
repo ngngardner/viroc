@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
+import torch
 import tritonclient.grpc as grpcclient
 from PIL import Image
+from transformers import AutoModelForImageTextToText, AutoProcessor
 
 
 def preprocess_img(img: Image.Image, size: tuple[int, int]) -> np.ndarray:
@@ -141,3 +143,45 @@ class YOLOModel(TritonModel):
         x2 = int((x_center + width / 2) * scale_x)
         y2 = int((y_center + height / 2) * scale_y)
         return (x1, y1, x2, y2)
+
+
+class GOTOCRModel:
+    """"""
+
+    def __init__(self) -> None:
+        """
+        Initialize the GOTOCR model.
+        """
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = AutoModelForImageTextToText.from_pretrained(
+            "stepfun-ai/GOT-OCR-2.0-hf",
+            device_map=self.device,
+        )
+        self.processor = AutoProcessor.from_pretrained(
+            "stepfun-ai/GOT-OCR-2.0-hf", use_fast=True
+        )
+
+    def predict(self, img: Image.Image) -> str:
+        """
+        Predict using the GOTOCR model on the input image.
+
+        Args:
+            img (Image.Image): Input image.
+
+        Returns:
+            str: Model predictions.
+        """
+        inputs = self.processor(images=img, return_tensors="pt").to(self.device)
+        generate_ids = self.model.generate(
+            **inputs,
+            do_sample=False,
+            tokenizer=self.processor.tokenizer,
+            stop_strings="<|im_end|>",
+            max_new_tokens=4096,
+        )
+        return str(
+            self.processor.decode(
+                generate_ids[0, inputs["input_ids"].shape[1] :],
+                skip_special_tokens=True,
+            )
+        )

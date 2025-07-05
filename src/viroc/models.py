@@ -4,7 +4,7 @@ import tritonclient.grpc as grpcclient
 from PIL import Image
 
 
-def preprocess_img(img: Image.Image, size: tuple[int, int] = (640, 640)) -> np.ndarray:
+def preprocess_img(img: Image.Image, size: tuple[int, int]) -> np.ndarray:
     """
     Preprocess an image for model input.
 
@@ -70,7 +70,10 @@ class YOLOModel(TritonModel):
     """
 
     def __init__(
-        self, model_name: str = "yolo", server_url: str = "localhost:8991"
+        self,
+        model_name: str = "yolo",
+        server_url: str = "localhost:8991",
+        input_size: tuple[int, int] = (640, 640),
     ) -> None:
         """
         Initialize the YOLO model.
@@ -78,12 +81,25 @@ class YOLOModel(TritonModel):
         Args:
             model_name (str): Name of the YOLO model.
             server_url (str): URL of the Triton server.
+            input_size (tuple[int, int]): Input size for the model.
         """
         super().__init__(model_name, server_url)
+        self.input_size = input_size
 
     def predict(self, img: Image.Image) -> np.ndarray:
         """
         Predict using the YOLO model on the input image.
+
+        The YOLOv5 output shape is `(batch_size, num_predictions, 6)` where:
+        - **batch_size**: Number of images processed (1 in this case)
+        - **num_predictions**: Number of detection boxes (25200 - this includes all anchor boxes)
+        - **6**: Each detection has 6 values:
+        - `[0]`: x_center (center x coordinate)
+        - `[1]`: y_center (center y coordinate)
+        - `[2]`: width (bounding box width)
+        - `[3]`: height (bounding box height)
+        - `[4]`: confidence (objectness score)
+        - `[5]`: class_probability (class confidence)
 
         Args:
             img (Image.Image): Input image.
@@ -91,7 +107,7 @@ class YOLOModel(TritonModel):
         Returns:
             np.ndarray: Model predictions.
         """
-        image_batch = preprocess_img(img)
+        image_batch = preprocess_img(img, self.input_size)
         input_tensor = grpcclient.InferInput("images", image_batch.shape, "FP32")
         input_tensor.set_data_from_numpy(image_batch)
         output_tensor = grpcclient.InferRequestedOutput("output0")
@@ -101,3 +117,27 @@ class YOLOModel(TritonModel):
             outputs=[output_tensor],
         )
         return response.as_numpy("output0")
+
+    def get_bounding_box(self, img: Image.Image) -> tuple[int, int, int, int]:
+        """
+        Get the most confident bounding box from the model predictions.
+
+        Args:
+            img (Image.Image): Input image.
+
+        Returns:
+            tuple[int, int, int, int]: The most confident bounding box.
+        """
+        prediction = self.predict(img)[0]
+        most_confident_box = prediction[prediction[:, 4].argmax()]
+
+        original_width, original_height = img.size
+        model_width, model_height = self.input_size
+        x_center, y_center, width, height = most_confident_box[:4]
+        scale_x = original_width / model_width
+        scale_y = original_height / model_height
+        x1 = int((x_center - width / 2) * scale_x)
+        y1 = int((y_center - height / 2) * scale_y)
+        x2 = int((x_center + width / 2) * scale_x)
+        y2 = int((y_center + height / 2) * scale_y)
+        return (x1, y1, x2, y2)

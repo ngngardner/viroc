@@ -28,7 +28,7 @@ with valid_file.open("r") as f:
     valid_files = f.read().splitlines()
 
 valid_df = pd.DataFrame(valid_files, columns=["filename"])
-valid_df = valid_df.sample(5000, random_state=42)
+valid_df = valid_df.sample(1000, random_state=42)
 valid_df["filename"] = valid_df["filename"].apply(lambda fn: dataset_path.parent / fn)
 valid_df["plate"] = valid_df["filename"].apply(
     lambda fn: decode_ccpd_filename(str(fn.name))["license_plate"]

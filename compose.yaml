@@ -9,14 +9,14 @@ services:
       - "8991:8991"
       - "8992:8992"
 
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: deploy/api.Dockerfile
-  #   environment:
-  #     - TRITON_SERVER_URL=triton:8991
-  #   gpus: all
-  #   ports:
-  #     - "8995:8995"
-  #   depends_on:
-  #     - triton
+  api:
+    build:
+      context: .
+      dockerfile: deploy/api.Dockerfile
+    environment:
+      - TRITON_SERVER_URL=triton:8991
+    gpus: all
+    ports:
+      - "8995:8995"
+    depends_on:
+      - triton

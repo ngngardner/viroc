@@ -45,6 +45,7 @@
         stroke: none,
         [Status:], [Draft],
         [Date:], datetime.today().display("[month] [day] [year]"),
+        [Author:], [Noah Gardner],
       ),
     )
   )
@@ -144,8 +145,33 @@ This section provides a bird's-eye view of the system's architecture.
 == Technology Stack
 
 - *Backend:* Python, FastAPI
-- *Model Inference:* NVIDIA TritonServer, Models from HuggingFace
+- *Model Inference:* NVIDIA TritonServer, Models from HuggingFace (GOT OCR v2, YOLOv5 [fine-tuned for license plates])
 - *Infrastructure:* Docker
+
+#pagebreak()
+
+== Results
+
+I made a benchmark using 1000 images from the CCPD2019 dataset, which contains
+license plates from China. Results saved in 'results/benchmark_results.csv'. I
+analyzed the results with for the metrics of prediction time (latency),
+accuracy, and Levenshtein ratio (a similarity measure between two strings).
+Accuracy measures the percent of time the model predicted the exact license
+plate (the model is able to detect the middle dot in the license plate ·, so it
+was removed for analysis). There was no mention of using the CCPD2019 or other
+license plate datasets for the training of the GOT OCR v2 model in the original
+paper.
+
+#table(
+  columns: (auto, auto),
+  align: (left, right),
+  inset: 8pt,
+  stroke: 1pt,
+  [*Metric*], [*Value*],
+  [Average Prediction Time (ms)], [1647.23],
+  [Accuracy], [64.90%],
+  [Average Levenshtein Ratio], [90.25%],
+)
 
 == Limitations and Potential Improvements
 
@@ -153,9 +179,10 @@ I did not finish implementation for the case where no license plate is visible.
 Confidence scores and thresholds would help here, but the parameters were tuned
 for performance on the stitched image test case.
 
-Benchmarks are required to determine the performance of the system under load
+Bigger benchmarks are required to determine the performance of the system under load
 and also to determine production accuracy. Tracing and other metrics would be
-useful.
+useful. Benchmarks would also allow us to compare and contrast different OCR
+models on our metrics, especially with access to production data.
 
 I was unable to deploy the OCR model to the Triton server. If I was building
 this application for production I would take the time to find a model that I can
